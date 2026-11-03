@@ -80,6 +80,18 @@
       border: 2px solid #0f1216;
     }
 
+    /* Fullscreen & Viewport HUD display rules */
+    #videoContainer:fullscreen #fullscreenHud:not(.force-hide-hud),
+    #videoContainer:-webkit-full-screen #fullscreenHud:not(.force-hide-hud) {
+      display: flex !important;
+    }
+    #fullscreenHud.force-show-hud {
+      display: flex !important;
+    }
+    #fullscreenHud.force-hide-hud {
+      display: none !important;
+    }
+
     /* Mirrored canvas when user toggles mirror mode */
     .mirror-canvas {
       transform: scaleX(-1);
@@ -206,10 +218,92 @@
             <span class="hidden sm:inline text-[11px]">鏡像</span>
           </button>
 
+          <!-- HUD Overlay Toggle Button -->
+          <button id="hudToggleBtn" title="顯示/隱藏結果提示 (HUD)" class="p-1.5 sm:p-2 rounded-lg bg-surface-950/85 backdrop-blur text-brand-400 hover:text-white border border-slate-700 active:scale-95 transition shadow-md flex items-center gap-1">
+            <i data-lucide="layout-dashboard" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+            <span class="hidden sm:inline text-[11px]">結果HUD</span>
+          </button>
+
           <!-- Fullscreen Toggle Button -->
           <button id="fullscreenBtn" title="全螢幕模式" class="p-1.5 sm:p-2 rounded-lg bg-surface-950/85 backdrop-blur text-slate-300 hover:text-white border border-slate-700 active:scale-95 transition shadow-md">
             <i data-lucide="maximize" id="fullscreenIcon" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
           </button>
+        </div>
+
+        <!-- Fullscreen & In-Viewport Results HUD Overlay -->
+        <div id="fullscreenHud" class="hidden absolute bottom-2 sm:bottom-3 left-2 sm:left-3 right-2 sm:right-3 z-30 pointer-events-auto flex-col gap-1.5 sm:gap-2 transition-all duration-300">
+          
+          <!-- Top Row: AI Kinetic Diagnostic Banner -->
+          <div id="fsDiagnosticBanner" class="p-2 sm:p-2.5 rounded-xl bg-surface-950/90 backdrop-blur-md border border-slate-700/80 text-xs flex items-center justify-between gap-2.5 shadow-2xl">
+            <div class="flex items-center gap-2 min-w-0">
+              <span id="fsDiagnosticIcon" class="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                <i data-lucide="check-circle-2" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+              </span>
+              <div class="min-w-0">
+                <div id="fsDiagnosticTitle" class="font-bold text-slate-200 text-xs truncate">系統就緒</div>
+                <div id="fsDiagnosticDesc" class="text-[11px] text-slate-400 truncate">請進行揮拍/擊球動作，即時評估動力鏈順序</div>
+              </div>
+            </div>
+            
+            <!-- Quick Reset in Fullscreen -->
+            <button id="fsResetBtn" class="shrink-0 px-2 py-1 rounded-md bg-surface-800 hover:bg-slate-700 active:scale-95 text-slate-300 text-[11px] transition">
+              重設峰值
+            </button>
+          </div>
+
+          <!-- Bottom Row: Metrics & Sequencing Flow & Mini Controls -->
+          <div class="p-2 sm:p-2.5 rounded-xl bg-surface-950/90 backdrop-blur-md border border-slate-700/80 flex flex-wrap items-center justify-between gap-2 shadow-2xl">
+            
+            <!-- Key Angles Strip -->
+            <div class="flex items-center gap-2 sm:gap-3 text-xs">
+              <div class="flex items-center gap-1">
+                <span class="text-slate-400 text-[10px] sm:text-xs">X-Factor:</span>
+                <span id="fsXFactorVal" class="font-mono font-black text-brand-400 text-xs sm:text-sm">0.0°</span>
+                <span id="fsXFactorBadge" class="text-[9px] px-1 py-0.5 rounded bg-slate-800 text-slate-400">待機</span>
+              </div>
+              <div class="flex items-center gap-2 text-[10px] sm:text-[11px] text-slate-300">
+                <span>膝: <strong id="fsKneeVal" class="font-mono text-sky-400">--°</strong></span>
+                <span>肘: <strong id="fsElbowVal" class="font-mono text-purple-400">--°</strong></span>
+                <span>軀幹: <strong id="fsTorsoVal" class="font-mono text-amber-400">--°</strong></span>
+              </div>
+            </div>
+
+            <!-- Kinetic 4-Step Sequence Mini Badges -->
+            <div class="flex items-center gap-1 text-[9px] sm:text-xs font-mono overflow-x-auto scrollbar-none">
+              <span id="fsStepLeg" class="px-1.5 py-0.5 rounded bg-surface-800 text-slate-400 border border-slate-700/60 whitespace-nowrap">
+                1.下肢 <span id="fsLegTime">--</span>
+              </span>
+              <span class="text-slate-600">➔</span>
+              <span id="fsStepPelvis" class="px-1.5 py-0.5 rounded bg-surface-800 text-slate-400 border border-slate-700/60 whitespace-nowrap">
+                2.骨盆 <span id="fsPelvisTime">--</span>
+              </span>
+              <span class="text-slate-600">➔</span>
+              <span id="fsStepTorso" class="px-1.5 py-0.5 rounded bg-surface-800 text-slate-400 border border-slate-700/60 whitespace-nowrap">
+                3.胸椎 <span id="fsTorsoTime">--</span>
+              </span>
+              <span class="text-slate-600">➔</span>
+              <span id="fsStepArm" class="px-1.5 py-0.5 rounded bg-surface-800 text-slate-400 border border-slate-700/60 whitespace-nowrap">
+                4.手臂 <span id="fsArmTime">--</span>
+              </span>
+            </div>
+
+            <!-- Fullscreen Mini Playback Step Controls -->
+            <div class="flex items-center gap-1">
+              <button id="fsStepBackBtn" class="p-1.5 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-300 transition active:scale-95" title="上一格">
+                <i data-lucide="skip-back" class="w-3.5 h-3.5"></i>
+              </button>
+              <button id="fsPlayPauseBtn" class="px-2.5 py-1 rounded-lg bg-brand-500 hover:bg-brand-600 text-surface-950 font-bold transition flex items-center gap-1 active:scale-95 text-xs">
+                <i data-lucide="play" id="fsPlayIcon" class="w-3.5 h-3.5 fill-current"></i>
+                <span id="fsPlayBtnText">播放</span>
+              </button>
+              <button id="fsStepForwardBtn" class="p-1.5 rounded-lg bg-surface-800 hover:bg-slate-700 text-slate-300 transition active:scale-95" title="下一格">
+                <i data-lucide="skip-forward" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+
+          </div>
+
+        </div>
         </div>
       </div>
 
@@ -468,6 +562,12 @@
       animationFrameId: null,
       lastTimestamp: -1,
       lastDetectionTime: 0,
+      lastInferenceTime: 0,
+      isInferencing: false,
+      cachedLandmarks: null,
+      cachedWorldLandmarks: null,
+      lastChartUpdateTime: 0,
+      lastDiagnosticState: '',
       fps: 0,
       frameCount: 0,
       fpsLastTime: performance.now(),
@@ -550,6 +650,33 @@
     const videoContainer = document.getElementById('videoContainer');
     const touchFeedback = document.getElementById('touchFeedback');
     const touchFeedbackIcon = document.getElementById('touchFeedbackIcon');
+
+    // Fullscreen HUD Elements
+    const hudToggleBtn = document.getElementById('hudToggleBtn');
+    const fullscreenHud = document.getElementById('fullscreenHud');
+    const fsDiagnosticBanner = document.getElementById('fsDiagnosticBanner');
+    const fsDiagnosticIcon = document.getElementById('fsDiagnosticIcon');
+    const fsDiagnosticTitle = document.getElementById('fsDiagnosticTitle');
+    const fsDiagnosticDesc = document.getElementById('fsDiagnosticDesc');
+    const fsResetBtn = document.getElementById('fsResetBtn');
+    const fsXFactorVal = document.getElementById('fsXFactorVal');
+    const fsXFactorBadge = document.getElementById('fsXFactorBadge');
+    const fsKneeVal = document.getElementById('fsKneeVal');
+    const fsElbowVal = document.getElementById('fsElbowVal');
+    const fsTorsoVal = document.getElementById('fsTorsoVal');
+    const fsStepLeg = document.getElementById('fsStepLeg');
+    const fsLegTime = document.getElementById('fsLegTime');
+    const fsStepPelvis = document.getElementById('fsStepPelvis');
+    const fsPelvisTime = document.getElementById('fsPelvisTime');
+    const fsStepTorso = document.getElementById('fsStepTorso');
+    const fsTorsoTime = document.getElementById('fsTorsoTime');
+    const fsStepArm = document.getElementById('fsStepArm');
+    const fsArmTime = document.getElementById('fsArmTime');
+    const fsStepBackBtn = document.getElementById('fsStepBackBtn');
+    const fsPlayPauseBtn = document.getElementById('fsPlayPauseBtn');
+    const fsPlayIcon = document.getElementById('fsPlayIcon');
+    const fsPlayBtnText = document.getElementById('fsPlayBtnText');
+    const fsStepForwardBtn = document.getElementById('fsStepForwardBtn');
 
     // Chart.js Setup
     let velocityChart;
@@ -694,16 +821,25 @@
         // 1. ALWAYS Draw Video Frame First so the camera/video is immediately visible
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // 2. Run Pose Landmarker if engine is ready
+        // 2. Pose Landmarker with Adaptive Frame Throttling (~30 FPS max to eliminate lag)
         if (state.poseLandmarker) {
           const isWebcam = !!video.srcObject;
-          const currentTimestamp = isWebcam ? performance.now() : video.currentTime;
+          const nowMs = performance.now();
 
-          if (isWebcam || currentTimestamp !== state.lastTimestamp) {
-            state.lastTimestamp = currentTimestamp;
+          // Throttling: For webcam, perform AI inference at ~30 FPS (every 33ms) to avoid saturating CPU/GPU
+          // For video file, run whenever currentTime updates
+          const shouldDetect = !state.isInferencing && (
+            isWebcam
+              ? (nowMs - state.lastInferenceTime >= 33)
+              : (video.currentTime !== state.lastTimestamp)
+          );
+
+          if (shouldDetect) {
+            state.isInferencing = true;
+            state.lastInferenceTime = nowMs;
+            state.lastTimestamp = isWebcam ? nowMs : video.currentTime;
 
             try {
-              const nowMs = performance.now();
               const startTimeMs = (state.lastDetectionTime && nowMs <= state.lastDetectionTime)
                 ? state.lastDetectionTime + 1
                 : nowMs;
@@ -712,18 +848,25 @@
               const poseLandmarkerResult = state.poseLandmarker.detectForVideo(video, startTimeMs);
 
               if (poseLandmarkerResult && poseLandmarkerResult.landmarks && poseLandmarkerResult.landmarks.length > 0) {
-                const landmarks = poseLandmarkerResult.landmarks[0];
-                const worldLandmarks = poseLandmarkerResult.worldLandmarks ? poseLandmarkerResult.worldLandmarks[0] : null;
+                state.cachedLandmarks = poseLandmarkerResult.landmarks[0];
+                state.cachedWorldLandmarks = poseLandmarkerResult.worldLandmarks ? poseLandmarkerResult.worldLandmarks[0] : null;
 
-                // Draw Kinetic Chain Skeleton
-                drawKineticChain(landmarks);
-
-                // Compute Biomechanical Angles
-                computeBiometrics(landmarks, worldLandmarks || landmarks);
+                // Compute Biomechanical Angles & Sequence
+                computeBiometrics(state.cachedLandmarks, state.cachedWorldLandmarks || state.cachedLandmarks);
+              } else {
+                state.cachedLandmarks = null;
+                state.cachedWorldLandmarks = null;
               }
             } catch (e) {
               console.warn("Detection frame skipped:", e);
+            } finally {
+              state.isInferencing = false;
             }
+          }
+
+          // Continuous smooth skeleton overlay (draws cached skeleton if frame was throttled)
+          if (state.cachedLandmarks) {
+            drawKineticChain(state.cachedLandmarks);
           }
         }
 
@@ -865,7 +1008,7 @@
       // 2. Separation Angle (X-Factor)
       const xFactor = calculateXFactor(worldLm);
 
-      // Update UI Metrics
+      // Update UI Metrics (Desktop)
       xFactorVal.textContent = xFactor.toFixed(1);
       xFactorBar.style.width = `${Math.min(100, (xFactor / 60) * 100)}%`;
       kneeAngleVal.textContent = `${kneeAngle}°`;
@@ -878,28 +1021,38 @@
       if (elbowAngleValMobile) elbowAngleValMobile.textContent = `${elbowAngle}°`;
       if (torsoLeanValMobile) torsoLeanValMobile.textContent = `${torsoAngle}°`;
 
+      // Update Fullscreen HUD Metrics
+      if (fsXFactorVal) fsXFactorVal.textContent = `${xFactor.toFixed(1)}°`;
+      if (fsKneeVal) fsKneeVal.textContent = `${kneeAngle}°`;
+      if (fsElbowVal) fsElbowVal.textContent = `${elbowAngle}°`;
+      if (fsTorsoVal) fsTorsoVal.textContent = `${torsoAngle}°`;
+
       // X-Factor Badging
+      let badgeText = '釋放 / 待機';
+      let badgeMobileText = '待機';
+      let badgeClass = 'px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-800 text-slate-400 border border-slate-700';
+      let badgeColor = 'text-slate-400';
       if (xFactor > 38) {
-        xFactorBadge.textContent = '爆發拉伸 (Peak Stretch)';
-        xFactorBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
-        if (xFactorBadgeMobile) {
-          xFactorBadgeMobile.textContent = '爆發拉伸';
-          xFactorBadgeMobile.className = 'text-[9px] text-emerald-400 font-semibold block truncate mt-0.5';
-        }
+        badgeText = '爆發拉伸 (Peak Stretch)';
+        badgeMobileText = '爆發拉伸';
+        badgeClass = 'px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+        badgeColor = 'text-emerald-400';
       } else if (xFactor > 20) {
-        xFactorBadge.textContent = '動力蓄力中';
-        xFactorBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-semibold bg-sky-500/20 text-sky-400 border border-sky-500/30';
-        if (xFactorBadgeMobile) {
-          xFactorBadgeMobile.textContent = '蓄力中';
-          xFactorBadgeMobile.className = 'text-[9px] text-sky-400 font-semibold block truncate mt-0.5';
-        }
-      } else {
-        xFactorBadge.textContent = '釋放 / 待機';
-        xFactorBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-800 text-slate-400 border border-slate-700';
-        if (xFactorBadgeMobile) {
-          xFactorBadgeMobile.textContent = '待機';
-          xFactorBadgeMobile.className = 'text-[9px] text-slate-400 block truncate mt-0.5';
-        }
+        badgeText = '動力蓄力中';
+        badgeMobileText = '蓄力中';
+        badgeClass = 'px-2.5 py-1 rounded-full text-[11px] font-semibold bg-sky-500/20 text-sky-400 border border-sky-500/30';
+        badgeColor = 'text-sky-400';
+      }
+
+      xFactorBadge.textContent = badgeText;
+      xFactorBadge.className = badgeClass;
+      if (xFactorBadgeMobile) {
+        xFactorBadgeMobile.textContent = badgeMobileText;
+        xFactorBadgeMobile.className = `text-[9px] ${badgeColor} font-semibold block truncate mt-0.5`;
+      }
+      if (fsXFactorBadge) {
+        fsXFactorBadge.textContent = badgeMobileText;
+        fsXFactorBadge.className = `text-[9px] px-1 py-0.5 rounded bg-surface-800 ${badgeColor} border border-slate-700`;
       }
 
       // 3. Dynamic Velocity & Sequencing Calculation
@@ -932,8 +1085,10 @@
           // Update Kinetic Flow Sequence Evaluation
           evaluateKineticSequence();
 
-          // Push to Velocity Chart
-          if (velocityChart) {
+          // Push to Velocity Chart (Throttled to max 20 FPS to reduce CPU overhead)
+          const nowChartTime = performance.now();
+          if (velocityChart && (nowChartTime - state.lastChartUpdateTime >= 50)) {
+            state.lastChartUpdateTime = nowChartTime;
             velocityChart.data.datasets[0].data.shift();
             velocityChart.data.datasets[0].data.push(pelvisVel);
             velocityChart.data.datasets[1].data.shift();
@@ -961,12 +1116,28 @@
         state.peakData[segment].peakVel = currentVel;
         state.peakData[segment].time = time;
         
-        // Update DOM Time label
+        // Update DOM Time labels & Fullscreen Mini Badges
         const timeStr = `${time.toFixed(2)}s`;
-        if (segment === 'leg') legPeakTime.textContent = timeStr;
-        if (segment === 'pelvis') pelvisPeakTime.textContent = timeStr;
-        if (segment === 'torso') torsoPeakTime.textContent = timeStr;
-        if (segment === 'arm') armPeakTime.textContent = timeStr;
+        if (segment === 'leg') {
+          legPeakTime.textContent = timeStr;
+          if (fsLegTime) fsLegTime.textContent = timeStr;
+          if (fsStepLeg) fsStepLeg.className = "px-1.5 py-0.5 rounded bg-sky-950/80 text-sky-300 border border-sky-500/60 whitespace-nowrap font-bold";
+        }
+        if (segment === 'pelvis') {
+          pelvisPeakTime.textContent = timeStr;
+          if (fsPelvisTime) fsPelvisTime.textContent = timeStr;
+          if (fsStepPelvis) fsStepPelvis.className = "px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-500/60 whitespace-nowrap font-bold";
+        }
+        if (segment === 'torso') {
+          torsoPeakTime.textContent = timeStr;
+          if (fsTorsoTime) fsTorsoTime.textContent = timeStr;
+          if (fsStepTorso) fsStepTorso.className = "px-1.5 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-500/60 whitespace-nowrap font-bold";
+        }
+        if (segment === 'arm') {
+          armPeakTime.textContent = timeStr;
+          if (fsArmTime) fsArmTime.textContent = timeStr;
+          if (fsStepArm) fsStepArm.className = "px-1.5 py-0.5 rounded bg-purple-950/80 text-purple-300 border border-purple-500/60 whitespace-nowrap font-bold";
+        }
       }
     }
 
@@ -982,34 +1153,72 @@
 
       // If both pelvis and arm have recorded peak times:
       if (pelvis.time !== null && arm.time !== null) {
-        if (arm.time < pelvis.time - 0.04) {
-          // Fault: Arm accelerated before pelvis
-          diagnosticAlert.className = "p-3 rounded-lg bg-rose-950/40 border border-rose-500/50 text-rose-300 text-xs flex items-start gap-2.5";
-          diagnosticAlert.innerHTML = `
-            <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-400 shrink-0 mt-0.5"></i>
-            <div>
-              <div class="font-bold text-rose-300">動力鏈斷點：手臂提早發力 (Arm Leading)</div>
-              <div class="text-[11px] text-rose-300/80 leading-tight mt-0.5">
-                手腕加速峰值 (${arm.time.toFixed(2)}s) 領先於骨盆核心轉向 (${pelvis.time.toFixed(2)}s)。下肢與核心能量未完全傳導至末端，容易造成肩關節拉傷代償。
-              </div>
-            </div>
-          `;
-          lucide.createIcons();
-          return;
-        }
+        const isFault = arm.time < pelvis.time - 0.04;
+        const newStatus = isFault ? 'fault' : 'ideal';
 
-        if (pelvis.time <= arm.time) {
-          // Ideal Sequence
-          diagnosticAlert.className = "p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/50 text-emerald-300 text-xs flex items-start gap-2.5";
-          diagnosticAlert.innerHTML = `
-            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
-            <div>
-              <div class="font-bold text-emerald-300">動力鏈傳導良好 (Sequential Acceleration)</div>
-              <div class="text-[11px] text-emerald-300/80 leading-tight mt-0.5">
-                下盤骨盆率先完成峰值加速制動 (${pelvis.time.toFixed(2)}s)，成功鞭打引導手臂末端 (${arm.time.toFixed(2)}s) 進行高速釋放！
+        // Only update DOM and re-create icons when status actually changes to prevent frame drops
+        if (state.lastDiagnosticState !== newStatus) {
+          state.lastDiagnosticState = newStatus;
+
+          if (isFault) {
+            // Fault: Arm accelerated before pelvis
+            diagnosticAlert.className = "p-3 rounded-lg bg-rose-950/40 border border-rose-500/50 text-rose-300 text-xs flex items-start gap-2.5";
+            diagnosticAlert.innerHTML = `
+              <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-400 shrink-0 mt-0.5"></i>
+              <div>
+                <div class="font-bold text-rose-300">動力鏈斷點：手臂提早發力 (Arm Leading)</div>
+                <div class="text-[11px] text-rose-300/80 leading-tight mt-0.5">
+                  手腕加速峰值 (${arm.time.toFixed(2)}s) 領先於骨盆核心轉向 (${pelvis.time.toFixed(2)}s)。下肢與核心能量未完全傳導至末端，容易造成肩關節拉傷代償。
+                </div>
               </div>
-            </div>
-          `;
+            `;
+
+            // Update Fullscreen HUD Banner
+            if (fsDiagnosticBanner) {
+              fsDiagnosticBanner.className = "p-2 sm:p-2.5 rounded-xl bg-rose-950/95 backdrop-blur-md border border-rose-500/60 text-xs flex items-center justify-between gap-2.5 shadow-2xl";
+              if (fsDiagnosticTitle) {
+                fsDiagnosticTitle.className = "font-bold text-rose-300 text-xs truncate";
+                fsDiagnosticTitle.textContent = "動力鏈斷點：手臂提早發力 (Arm Leading)";
+              }
+              if (fsDiagnosticDesc) {
+                fsDiagnosticDesc.className = "text-[11px] text-rose-300/80 truncate";
+                fsDiagnosticDesc.textContent = `手腕加速峰值 (${arm.time.toFixed(2)}s) 早於骨盆核心轉向 (${pelvis.time.toFixed(2)}s)，容易拉傷代償！`;
+              }
+              if (fsDiagnosticIcon) {
+                fsDiagnosticIcon.className = "w-6 h-6 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0";
+                fsDiagnosticIcon.innerHTML = `<i data-lucide="alert-triangle" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>`;
+              }
+            }
+          } else {
+            // Ideal Sequence
+            diagnosticAlert.className = "p-3 rounded-lg bg-emerald-950/40 border border-emerald-500/50 text-emerald-300 text-xs flex items-start gap-2.5";
+            diagnosticAlert.innerHTML = `
+              <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400 shrink-0 mt-0.5"></i>
+              <div>
+                <div class="font-bold text-emerald-300">動力鏈傳導良好 (Sequential Acceleration)</div>
+                <div class="text-[11px] text-emerald-300/80 leading-tight mt-0.5">
+                  下盤骨盆率先完成峰值加速制動 (${pelvis.time.toFixed(2)}s)，成功鞭打引導手臂末端 (${arm.time.toFixed(2)}s) 進行高速釋放！
+                </div>
+              </div>
+            `;
+
+            // Update Fullscreen HUD Banner
+            if (fsDiagnosticBanner) {
+              fsDiagnosticBanner.className = "p-2 sm:p-2.5 rounded-xl bg-emerald-950/95 backdrop-blur-md border border-emerald-500/60 text-xs flex items-center justify-between gap-2.5 shadow-2xl";
+              if (fsDiagnosticTitle) {
+                fsDiagnosticTitle.className = "font-bold text-emerald-300 text-xs truncate";
+                fsDiagnosticTitle.textContent = "動力鏈傳導良好 (Sequential Acceleration)";
+              }
+              if (fsDiagnosticDesc) {
+                fsDiagnosticDesc.className = "text-[11px] text-emerald-300/80 truncate";
+                fsDiagnosticDesc.textContent = `下盤骨盆率先完成加速制動 (${pelvis.time.toFixed(2)}s)，成功引導手臂末端 (${arm.time.toFixed(2)}s) 高速釋放！`;
+              }
+              if (fsDiagnosticIcon) {
+                fsDiagnosticIcon.className = "w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0";
+                fsDiagnosticIcon.innerHTML = `<i data-lucide="check-circle-2" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>`;
+              }
+            }
+          }
           lucide.createIcons();
         }
       }
@@ -1031,12 +1240,18 @@
     }
 
     function updatePlayPauseUI() {
+      const curPlayIcon = document.getElementById('playIcon');
+      const curFsPlayIcon = document.getElementById('fsPlayIcon');
       if (state.isPlaying) {
-        playIcon.setAttribute('data-lucide', 'pause');
-        playBtnText.textContent = '暫停';
+        if (curPlayIcon) curPlayIcon.setAttribute('data-lucide', 'pause');
+        if (playBtnText) playBtnText.textContent = '暫停';
+        if (curFsPlayIcon) curFsPlayIcon.setAttribute('data-lucide', 'pause');
+        if (fsPlayBtnText) fsPlayBtnText.textContent = '暫停';
       } else {
-        playIcon.setAttribute('data-lucide', 'play');
-        playBtnText.textContent = '播放';
+        if (curPlayIcon) curPlayIcon.setAttribute('data-lucide', 'play');
+        if (playBtnText) playBtnText.textContent = '播放';
+        if (curFsPlayIcon) curFsPlayIcon.setAttribute('data-lucide', 'play');
+        if (fsPlayBtnText) fsPlayBtnText.textContent = '播放';
       }
       lucide.createIcons();
     }
@@ -1067,6 +1282,7 @@
       };
       state.prevJoints = null;
       state.prevTime = null;
+      state.lastDiagnosticState = 'reset';
       legPeakTime.textContent = '未偵測';
       pelvisPeakTime.textContent = '未偵測';
       torsoPeakTime.textContent = '未偵測';
@@ -1080,9 +1296,34 @@
         <i data-lucide="info" class="w-4 h-4 text-slate-400 shrink-0 mt-0.5"></i>
         <div>
           <div class="font-bold text-slate-300">峰值已重置</div>
-          <div class="text-[11px] text-slate-400 leading-tight mt-0.5">播放慢動作影片進行新一輪動力鏈傳導檢視。</div>
+          <div class="text-[11px] text-slate-400 leading-tight mt-0.5">進行動作以評估動力鏈傳導順序。</div>
         </div>
       `;
+
+      // Reset Fullscreen HUD elements
+      if (fsLegTime) fsLegTime.textContent = '--';
+      if (fsPelvisTime) fsPelvisTime.textContent = '--';
+      if (fsTorsoTime) fsTorsoTime.textContent = '--';
+      if (fsArmTime) fsArmTime.textContent = '--';
+      if (fsStepLeg) fsStepLeg.className = "px-1.5 py-0.5 rounded bg-surface-800 text-slate-400 border border-slate-700/60 whitespace-nowrap";
+      if (fsStepPelvis) fsStepPelvis.className = "px-1.5 py-0.5 rounded bg-surface-800 text-slate-400 border border-slate-700/60 whitespace-nowrap";
+      if (fsStepTorso) fsStepTorso.className = "px-1.5 py-0.5 rounded bg-surface-800 text-slate-400 border border-slate-700/60 whitespace-nowrap";
+      if (fsStepArm) fsStepArm.className = "px-1.5 py-0.5 rounded bg-surface-800 text-slate-400 border border-slate-700/60 whitespace-nowrap";
+      if (fsDiagnosticBanner) {
+        fsDiagnosticBanner.className = "p-2 sm:p-2.5 rounded-xl bg-surface-950/90 backdrop-blur-md border border-slate-700/80 text-xs flex items-center justify-between gap-2.5 shadow-2xl";
+        if (fsDiagnosticTitle) {
+          fsDiagnosticTitle.className = "font-bold text-slate-200 text-xs truncate";
+          fsDiagnosticTitle.textContent = "峰值已重置";
+        }
+        if (fsDiagnosticDesc) {
+          fsDiagnosticDesc.className = "text-[11px] text-slate-400 truncate";
+          fsDiagnosticDesc.textContent = "請進行揮拍/擊球動作，即時評估動力鏈順序";
+        }
+        if (fsDiagnosticIcon) {
+          fsDiagnosticIcon.className = "w-6 h-6 rounded-lg bg-surface-800 text-slate-400 flex items-center justify-center shrink-0";
+          fsDiagnosticIcon.innerHTML = `<i data-lucide="info" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>`;
+        }
+      }
       lucide.createIcons();
     }
 
@@ -1153,6 +1394,7 @@
           video: {
             width: { ideal: 1280 },
             height: { ideal: 720 },
+            frameRate: { ideal: 30, max: 30 },
             facingMode: currentFacingMode
           },
           audio: false
@@ -1160,7 +1402,9 @@
       } catch (err1) {
         try {
           stream = await navigator.mediaDevices.getUserMedia({
-            video: true,
+            video: {
+              frameRate: { ideal: 30, max: 30 }
+            },
             audio: false
           });
         } catch (err) {
@@ -1251,6 +1495,30 @@
     stepForwardBtn.addEventListener('click', () => stepFrame(1));
     resetSequenceBtn.addEventListener('click', resetSequencePeaks);
 
+    // Fullscreen HUD mini controls
+    if (fsPlayPauseBtn) fsPlayPauseBtn.addEventListener('click', togglePlay);
+    if (fsStepBackBtn) fsStepBackBtn.addEventListener('click', () => stepFrame(-1));
+    if (fsStepForwardBtn) fsStepForwardBtn.addEventListener('click', () => stepFrame(1));
+    if (fsResetBtn) fsResetBtn.addEventListener('click', resetSequencePeaks);
+
+    // Results HUD Toggle Button
+    if (hudToggleBtn && fullscreenHud) {
+      hudToggleBtn.addEventListener('click', () => {
+        const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+        if (isFs) {
+          fullscreenHud.classList.toggle('force-hide-hud');
+          const isHidden = fullscreenHud.classList.contains('force-hide-hud');
+          hudToggleBtn.classList.toggle('text-brand-400', !isHidden);
+          hudToggleBtn.classList.toggle('text-slate-400', isHidden);
+        } else {
+          fullscreenHud.classList.toggle('force-show-hud');
+          const isShown = fullscreenHud.classList.contains('force-show-hud');
+          hudToggleBtn.classList.toggle('text-brand-400', isShown);
+          hudToggleBtn.classList.toggle('text-slate-400', !isShown);
+        }
+      });
+    }
+
     loopToggleBtn.addEventListener('click', () => {
       video.loop = !video.loop;
       loopToggleBtn.classList.toggle('text-brand-400', video.loop);
@@ -1336,13 +1604,17 @@
               video: {
                 facingMode: { ideal: currentFacingMode },
                 width: { ideal: 1280 },
-                height: { ideal: 720 }
+                height: { ideal: 720 },
+                frameRate: { ideal: 30, max: 30 }
               },
               audio: false
             });
           } catch(e) {
             stream = await navigator.mediaDevices.getUserMedia({
-              video: { facingMode: currentFacingMode },
+              video: {
+                facingMode: currentFacingMode,
+                frameRate: { ideal: 30, max: 30 }
+              },
               audio: false
             });
           }
@@ -1401,6 +1673,13 @@
         if (icon) {
           icon.setAttribute('data-lucide', isFs ? 'minimize' : 'maximize');
           lucide.createIcons();
+        }
+        if (isFs && fullscreenHud) {
+          fullscreenHud.classList.remove('force-hide-hud');
+          if (hudToggleBtn) {
+            hudToggleBtn.classList.add('text-brand-400');
+            hudToggleBtn.classList.remove('text-slate-400');
+          }
         }
       };
       document.addEventListener('fullscreenchange', onFullscreenChange);
